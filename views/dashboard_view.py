@@ -219,7 +219,7 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
             f_rake = ft.TextField(label="Rake (mm)", value=str(assetto.get("rake_testa_albero_mm", "")), width=118, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
             f_prebend = ft.TextField(label="Pre-bend (mm)", value=str(assetto.get("pre_bend_mm", "")), width=118, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
 
-            msg_barca = ft.Text("", color=ft.Colors.GREEN_700, weight=ft.FontWeight.BOLD)
+            msg_barca = ft.Text("", color=ft.Colors.GREEN_700, weight=ft.FontWeight.BOLD) #quando salvi barca ti viene fuori "barca salvata"
 
             def salva_dati_scafo(e):
                 dati["dati_barca"] = {
@@ -240,11 +240,11 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
                 page.update()
 
             page.add(
-                ft.Row([f_cantiere, f_anno], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                ft.Row([f_peso, f_correttori], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                ft.Row([f_albero, f_tensiometro], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                ft.Row([f_cantiere, f_anno], spacing=12, alignment=ft.MainAxisAlignment.START),
+                ft.Row([f_peso, f_correttori], spacing=12, alignment=ft.MainAxisAlignment.START),
+                ft.Row([f_albero, f_tensiometro], spacing=12, alignment=ft.MainAxisAlignment.START),
                 ft.Text("Assetto Base Banchina", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
-                ft.Row([f_strallo, f_rake, f_prebend], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                ft.Row([f_strallo, f_rake, f_prebend], spacing=12, alignment=ft.MainAxisAlignment.START)
             )
             if puo_modificare:
                 page.add(
@@ -363,8 +363,8 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
 
                 page.add(
                     b_nome,
-                    ft.Row([b_vento, b_eq], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                    ft.Row([b_alte, b_basse, b_strallo], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                    ft.Row([b_vento, b_eq], spacing=12, alignment=ft.MainAxisAlignment.START),
+                    ft.Row([b_alte, b_basse, b_strallo], spacing=12, alignment=ft.MainAxisAlignment.START),
                     b_primo_uso,
                     b_commenti,
                     b_err,

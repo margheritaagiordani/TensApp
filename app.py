@@ -42,4 +42,4 @@ def main(page: ft.Page):
     vai_a_login()
 
 
-ft.run(main, view=ft.AppView.WEB_BROWSER, port=8550)
+ft.run(main)#, view=ft.AppView.WEB_BROWSER, port=8550)
