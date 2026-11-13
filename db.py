@@ -75,3 +75,84 @@ def condividi_barca_con_email(barca_id: str, email_invitato: str, permesso: str)
 
 def rimuovi_condivisione(condivisione_id: str):
     supabase.table("condivisioni").delete().eq("id", condivisione_id).execute()
+
+# ==============================================================================
+# GESTIONE BASELINE TENSIONI
+# ==============================================================================
+
+def get_baseline_barca(barca_id: str):
+    return (
+        supabase.table("baseline_tensioni")
+        .select("*")
+        .eq("barca_id", barca_id)
+        .order("created_at")
+        .execute()
+        .data
+    )
+
+
+def aggiungi_baseline(barca_id: str, dati_baseline: dict):
+    record = {"barca_id": barca_id, **dati_baseline}
+    return supabase.table("baseline_tensioni").insert(record).execute().data[0]
+
+
+def aggiorna_baseline(baseline_id: str, dati_baseline: dict):
+    supabase.table("baseline_tensioni").update(dati_baseline).eq("id", baseline_id).execute()
+
+
+def elimina_baseline(baseline_id: str):
+    supabase.table("baseline_tensioni").delete().eq("id", baseline_id).execute()
+
+
+# ==============================================================================
+# GESTIONE INVENTARIO VELE
+# ==============================================================================
+
+def get_inventario_vele(barca_id: str):
+    return (
+        supabase.table("inventario_vele")
+        .select("*")
+        .eq("barca_id", barca_id)
+        .order("categoria")
+        .order("nome_vela")
+        .execute()
+        .data
+    )
+
+
+def aggiungi_vela(barca_id: str, dati_vela: dict):
+    record = {"barca_id": barca_id, **dati_vela}
+    return supabase.table("inventario_vele").insert(record).execute().data[0]
+
+
+def elimina_vela(vela_id: str):
+    supabase.table("inventario_vele").delete().eq("id", vela_id).execute()
+
+
+# ==============================================================================
+# GESTIONE LOG TENSIONI (DIARIO USCITE)
+# ==============================================================================
+
+def get_log_tensioni(barca_id: str):
+    return (
+        supabase.table("log_tensioni")
+        .select(
+            "*, "
+            "randa:inventario_vele!randa_id(id, nome_vela), "
+            "fiocco_genoa:inventario_vele!fiocco_genoa_id(id, nome_vela), "
+            "vela_prua:inventario_vele!vela_prua_id(id, nome_vela)"
+        )
+        .eq("barca_id", barca_id)
+        .order("data", desc=True)
+        .execute()
+        .data
+    )
+
+
+def aggiungi_log_tensione(barca_id: str, dati_log: dict):
+    record = {"barca_id": barca_id, **dati_log}
+    return supabase.table("log_tensioni").insert(record).execute().data[0]
+
+
+def elimina_log_tensione(log_id: str):
+    supabase.table("log_tensioni").delete().eq("id", log_id).execute()

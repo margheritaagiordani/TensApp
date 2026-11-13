@@ -33,8 +33,17 @@ def build_nuova_barca_view(page: ft.Page, stato: dict, on_back):
             options=opzioni_classi,
             width=370,
         )
-        nome_field = ft.TextField(label="Nome Barca (es. Albatros)", width=370)
+        nome_field = ft.TextField(label="Nome Barca (es. Albatros) *", width=370)
         vela_field = ft.TextField(label="Numero Velico (es. ITA 510)", width=370)
+
+        # Campi specifici dello scafo dell'armatore
+        cantiere_field = ft.TextField(label="Cantiere (es. Sipla, Nautica Lario)", width=370)
+        anno_field = ft.TextField(label="Anno costruzione", width=180, keyboard_type=ft.KeyboardType.NUMBER)
+        peso_field = ft.TextField(label="Peso reale (kg)", value="770", width=180, keyboard_type=ft.KeyboardType.NUMBER)
+        correttori_field = ft.TextField(label="Correttori di stazza (es. 6kg prua)", width=370)
+        albero_field = ft.TextField(label="Modello / Profilo Albero (es. Sparcraft)", width=370)
+        tensiometro_field = ft.TextField(label="Scala Tensiometro", value="Loos PT-1", width=370)
+
         errore_text = ft.Text("", color=ft.Colors.RED_600, size=13)
 
         def salva_nuova_barca(e):
@@ -50,21 +59,38 @@ def build_nuova_barca_view(page: ft.Page, stato: dict, on_back):
                 nome_barca=nome_field.value,
                 numero_velico=vela_field.value,
             )
+
+            # Aggiorniamo subito i dati_barca personalizzati se il template li prevede
+            dati_reg = nuova["dati_regolazioni"]
+            if "dati_barca" in dati_reg:
+                dati_reg["dati_barca"]["cantiere"] = cantiere_field.value.strip()
+                dati_reg["dati_barca"]["anno_costruzione"] = int(anno_field.value) if anno_field.value.strip().isdigit() else None
+                try:
+                    dati_reg["dati_barca"]["peso_reale_kg"] = float(peso_field.value.replace(",", ".")) if peso_field.value else 770
+                except ValueError:
+                    dati_reg["dati_barca"]["peso_reale_kg"] = 770
+                dati_reg["dati_barca"]["correttori_kg"] = correttori_field.value.strip()
+                dati_reg["dati_barca"]["modello_albero"] = albero_field.value.strip()
+                dati_reg["dati_barca"]["scala_tensiometro"] = tensiometro_field.value.strip() or "Loos PT-1"
+                db.aggiorna_regolazioni(nuova["id"], dati_reg)
+
             stato["barca_selezionata_id"] = nuova["id"]
             on_back()
 
         page.add(
             header,
             ft.Divider(),
-            ft.Text(
-                "Scegli una classe per precompilare automaticamente misure e tensioni base:",
-                size=13,
-                color=ft.Colors.GREY_700,
-            ),
-            ft.Container(height=10),
+            ft.Text("Dati Identificativi & Classe", weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
             dropdown_classe,
             nome_field,
             vela_field,
+            ft.Divider(height=15),
+            ft.Text("Specifiche Scafo & Attrezzatura", weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
+            cantiere_field,
+            ft.Row([anno_field, peso_field], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            correttori_field,
+            albero_field,
+            tensiometro_field,
             errore_text,
             ft.Container(height=10),
             ft.Button(
