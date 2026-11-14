@@ -538,11 +538,11 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
 
                 vele_usate = []
                 if lg.get("randa"):
-                    vele_usate.append(f"Randa: {lg['randa']['nome_vela']}")
+                    vele_usate.append(f"Mainsail: {lg['randa']['nome_vela']}")
                 if lg.get("fiocco_genoa"):
-                    vele_usate.append(f"Prua/Genoa: {lg['fiocco_genoa']['nome_vela']}")
+                    vele_usate.append(f"Headsail: {lg['fiocco_genoa']['nome_vela']}")
                 if lg.get("vela_prua"):
-                    vele_usate.append(f"Spi: {lg['vela_prua']['nome_vela']}")
+                    vele_usate.append(f"Kite: {lg['vela_prua']['nome_vela']}")
 
                 top_lg = [
                     ft.Column(
