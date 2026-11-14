@@ -3,7 +3,7 @@ from views.login_view import build_login_view
 from views.dashboard_view import build_dashboard_view
 from views.nuova_barca_view import build_nuova_barca_view
 from views.condividi_view import build_condividi_view
-
+import os
 
 def main(page: ft.Page):
     page.title = "TensApp - Boat Specs"
@@ -42,4 +42,6 @@ def main(page: ft.Page):
     vai_a_login()
 
 
-ft.run(main)#, view=ft.AppView.WEB_BROWSER, port=8550)
+#ft.run(main)#, view=ft.AppView.WEB_BROWSER, port=8550)
+port = int(os.environ.get("PORT", 8550))
+ft.run(main, view=ft.AppView.WEB_BROWSER, host="0.0.0.0", port=port)
