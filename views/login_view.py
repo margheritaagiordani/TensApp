@@ -32,6 +32,12 @@ def build_login_view(page: ft.Page, stato: dict, on_login_success):
         messaggio_text.value = ""
         page.update()
 
+    def compila_basilico(e):
+        email_field.value = "matteo.sampiero@gmail.com"
+        pass_field.value = "Basilico781"
+        messaggio_text.value = ""
+        page.update()
+
     def esegui_login(e):
         if not email_field.value or not pass_field.value:
             messaggio_text.value = "Inserisci email e password."
@@ -100,6 +106,7 @@ def build_login_view(page: ft.Page, stato: dict, on_login_success):
                 ft.OutlinedButton("Armatore", on_click=compila_armatore),
                 ft.OutlinedButton("Prodiere", on_click=compila_prodiere),
                 ft.OutlinedButton("Tattico", on_click=compila_tattico),
+                ft.OutlinedButton("Basilico", on_click=compila_basilico),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
         ),
