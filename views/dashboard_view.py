@@ -420,9 +420,9 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
                     label="Categoria *",
                     value="fiocco_genoa",
                     options=[
-                        ft.dropdown.Option(key="randa", text="Randa"),
-                        ft.dropdown.Option(key="fiocco_genoa", text="Fiocco / Genoa"),
-                        ft.dropdown.Option(key="prua", text="Vela di prua (Spi)"),
+                        ft.dropdown.Option(key="randa", text="Mainsail"),
+                        ft.dropdown.Option(key="fiocco_genoa", text="Headsail"),
+                        ft.dropdown.Option(key="prua", text="Kite"),
                     ],
                     width=370,
                 )
