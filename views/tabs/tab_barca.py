@@ -2,49 +2,80 @@ import flet as ft
 import db
 
 
-def build_tab_barca(page: ft.Page, barca: dict, puo_modificare: bool):
-    is_custom = barca["classe_id"] == "custom"
-    dati = barca["dati_regolazioni"]
-    specs = dati.get("specifiche_fisse", {})
+def build_tab_barca(page: ft.Page, barca: dict, puo_modificare: bool, on_refresh=None):
+    dati = barca.get("dati_regolazioni") or {}
+    specs = dati.get("specifiche_fisse")
     dati_barca = dati.get("dati_barca", {})
     assetto = dati.get("assetto_banchina", dati.get("assetto_base_banchina", {}))
 
+    # Se NON esistono "specifiche_fisse", allora è una barca di default / classe libera!
+    is_default = not bool(specs)
+
     msg_barca = ft.Text("", color=ft.Colors.GREEN_700, weight=ft.FontWeight.BOLD)
 
-    if is_custom:
+    if is_default:
         # ==================================================================
-        # CASO 1: BARCA DI DEFAULT / PERSONALIZZATA ('custom') - NESSUN DATO FISSO
+        # BARCA DI DEFAULT / CLASSE LIBERA: NESSUNA SPECIFICA FISSA
+        # Mostra e permette di modificare TUTTI i dati inseriti alla creazione
         # ==================================================================
+        f_nome = ft.TextField(label="Nome Barca", value=str(barca.get("nome_barca", "")), width=220, dense=True, read_only=not puo_modificare)
+        f_vela = ft.TextField(label="Numero Velico", value=str(barca.get("numero_velico", "")), width=140, dense=True, read_only=not puo_modificare)
         f_modello = ft.TextField(label="Modello Barca", value=str(dati_barca.get("modello_barca", "")), width=370, dense=True, read_only=not puo_modificare)
+
         f_cantiere = ft.TextField(label="Cantiere", value=str(dati_barca.get("cantiere", "")), width=220, dense=True, read_only=not puo_modificare)
-        f_anno = ft.TextField(label="Anno", value=str(dati_barca.get("anno_costruzione") or ""), width=140, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
+        f_anno = ft.TextField(label="Anno costruzione", value=str(dati_barca.get("anno_costruzione") or ""), width=140, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
+
         f_peso = ft.TextField(label="Peso (kg)", value=str(dati_barca.get("peso_kg") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
         f_peso_chiglia = ft.TextField(label="Peso in chiglia (kg)", value=str(dati_barca.get("peso_chiglia_kg") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
+
         f_lft = ft.TextField(label="Lunghezza LFT (mm)", value=str(dati_barca.get("lunghezza_lft_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
         f_beam = ft.TextField(label="Larghezza Beam (mm)", value=str(dati_barca.get("larghezza_beam_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
         f_pescaggio = ft.TextField(label="Pescaggio (mm)", value=str(dati_barca.get("pescaggio_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
         f_max_p = ft.TextField(label="Max P (mm)", value=str(dati_barca.get("max_p_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
+
         f_correttori = ft.TextField(label="Correttori di stazza", value=str(dati_barca.get("correttori_stazza", "")), width=370, dense=True, read_only=not puo_modificare)
 
-        def salva_custom(e):
+        def parse_float(val):
+            try:
+                return float(val.replace(",", ".")) if val and val.strip() else None
+            except ValueError:
+                return None
+
+        def parse_int(val):
+            try:
+                return int(float(val.replace(",", "."))) if val and val.strip() else None
+            except ValueError:
+                return None
+
+        def salva_default(e):
+            # Aggiorniamo anche nome_barca e numero_velico nella tabella barche
+            db.supabase.table("barche").update({
+                "nome_barca": f_nome.value.strip() or barca["nome_barca"],
+                "numero_velico": f_vela.value.strip(),
+            }).eq("id", barca["id"]).execute()
+
             dati["dati_barca"] = {
                 "modello_barca": f_modello.value.strip(),
                 "cantiere": f_cantiere.value.strip(),
-                "anno_costruzione": int(f_anno.value) if f_anno.value.strip().isdigit() else None,
-                "peso_kg": float(f_peso.value.replace(",", ".")) if f_peso.value.strip() else None,
-                "peso_chiglia_kg": float(f_peso_chiglia.value.replace(",", ".")) if f_peso_chiglia.value.strip() else None,
-                "lunghezza_lft_mm": int(float(f_lft.value.replace(",", "."))) if f_lft.value.strip() else None,
-                "larghezza_beam_mm": int(float(f_beam.value.replace(",", "."))) if f_beam.value.strip() else None,
-                "pescaggio_mm": int(float(f_pescaggio.value.replace(",", "."))) if f_pescaggio.value.strip() else None,
-                "max_p_mm": int(float(f_max_p.value.replace(",", "."))) if f_max_p.value.strip() else None,
+                "anno_costruzione": parse_int(f_anno.value),
+                "peso_kg": parse_float(f_peso.value),
+                "peso_chiglia_kg": parse_float(f_peso_chiglia.value),
+                "lunghezza_lft_mm": parse_int(f_lft.value),
+                "larghezza_beam_mm": parse_int(f_beam.value),
+                "pescaggio_mm": parse_int(f_pescaggio.value),
+                "max_p_mm": parse_int(f_max_p.value),
                 "correttori_stazza": f_correttori.value.strip(),
             }
             db.aggiorna_regolazioni(barca["id"], dati)
             msg_barca.value = "✓ Dati barca salvati!"
-            page.update()
+            if on_refresh:
+                on_refresh()
+            else:
+                page.update()
 
         page.add(
-            ft.Text("Dati & Dimensioni Barca (mm)", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
+            ft.Text("Scheda Tecnica Barca (Misure in mm)", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
+            ft.Row([f_nome, f_vela], spacing=10),
             f_modello,
             ft.Row([f_cantiere, f_anno], spacing=10),
             ft.Row([f_peso, f_peso_chiglia], spacing=10),
@@ -54,13 +85,13 @@ def build_tab_barca(page: ft.Page, barca: dict, puo_modificare: bool):
         )
         if puo_modificare:
             page.add(
-                ft.Button("Salva Dati Barca", icon=ft.Icons.SAVE, bgcolor=ft.Colors.BLUE_700, color=ft.Colors.WHITE, width=370, on_click=salva_custom),
+                ft.Button("Salva Dati Barca", icon=ft.Icons.SAVE, bgcolor=ft.Colors.BLUE_700, color=ft.Colors.WHITE, width=370, on_click=salva_default),
                 msg_barca,
             )
 
     else:
         # ==================================================================
-        # CASO 2: CLASSE MONOTIPO CON TEMPLATE (es. METEOR)
+        # CLASSE MONOTIPO CON TEMPLATE (es. METEOR)
         # ==================================================================
         peso_min = specs.get("dislocamento_minimo_kg", specs.get("dislocamento_kg", 770))
         page.add(
