@@ -33,43 +33,44 @@ def build_nuova_barca_view(page: ft.Page, stato: dict, on_back):
             options=opzioni_classi,
             width=370,
         )
-        nome_field = ft.TextField(label="Nome Barca (es. Albatros) *", width=370)
+
+        # Dati identificativi
+        nome_field = ft.TextField(label="Nome Barca *", width=370)
+        modello_field = ft.TextField(label="Modello Barca (es. J/24, First 31.7) *", width=370)
         vela_field = ft.TextField(label="Numero Velico (es. ITA 510)", width=370)
 
-        # Campi extra visibili SOLO se l'utente sceglie il modello 'custom'
-        classe_custom_field = ft.TextField(label="Nome Classe / Modello (es. J/24, First 31.7) *", width=370)
-        lft_field = ft.TextField(label="Lunghezza LFT (m)", width=115, keyboard_type=ft.KeyboardType.NUMBER)
-        larghezza_field = ft.TextField(label="Larghezza (m)", width=115, keyboard_type=ft.KeyboardType.NUMBER)
-        pescaggio_field = ft.TextField(label="Pescaggio (m)", width=115, keyboard_type=ft.KeyboardType.NUMBER)
+        # Cantiere, anno e pesi
+        cantiere_field = ft.TextField(label="Cantiere", width=220)
+        anno_field = ft.TextField(label="Anno costruzione", width=140, keyboard_type=ft.KeyboardType.NUMBER)
+        peso_field = ft.TextField(label="Peso (kg)", width=180, keyboard_type=ft.KeyboardType.NUMBER)
+        peso_chiglia_field = ft.TextField(label="Peso in chiglia (kg)", width=180, keyboard_type=ft.KeyboardType.NUMBER)
+        correttori_field = ft.TextField(label="Correttori di stazza", width=370)
 
-        contenitore_custom = ft.Column(
+        # Misure in millimetri (per barca di default 'custom')
+        lft_field = ft.TextField(label="Lunghezza LFT (mm)", width=180, keyboard_type=ft.KeyboardType.NUMBER)
+        beam_field = ft.TextField(label="Larghezza Beam (mm)", width=180, keyboard_type=ft.KeyboardType.NUMBER)
+        pescaggio_field = ft.TextField(label="Pescaggio (mm)", width=180, keyboard_type=ft.KeyboardType.NUMBER)
+        max_p_field = ft.TextField(label="Max P (mm)", width=180, keyboard_type=ft.KeyboardType.NUMBER)
+
+        sezione_misure_mm = ft.Column(
             [
-                classe_custom_field,
-                ft.Row([lft_field, larghezza_field, pescaggio_field], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                ft.Row([lft_field, beam_field], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                ft.Row([pescaggio_field, max_p_field], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
             ],
             visible=(dropdown_classe.value == "custom"),
         )
+        modello_field.visible = (dropdown_classe.value == "custom")
+        peso_chiglia_field.visible = (dropdown_classe.value == "custom")
 
         def on_cambia_classe(e):
             is_custom = dropdown_classe.value == "custom"
-            contenitore_custom.visible = is_custom
+            modello_field.visible = is_custom
+            peso_chiglia_field.visible = is_custom
+            sezione_misure_mm.visible = is_custom
             peso_field.value = "" if is_custom else "770"
             page.update()
 
         dropdown_classe.on_select = on_cambia_classe
-
-        # Campi specifici dello scafo dell'armatore (comuni a tutte le barche)
-        cantiere_field = ft.TextField(label="Cantiere (es. Sipla, Beneteau)", width=370)
-        anno_field = ft.TextField(label="Anno costruzione", width=180, keyboard_type=ft.KeyboardType.NUMBER)
-        peso_field = ft.TextField(
-            label="Peso reale / Dislocamento (kg)",
-            value="" if dropdown_classe.value == "custom" else "770",
-            width=180,
-            keyboard_type=ft.KeyboardType.NUMBER,
-        )
-        correttori_field = ft.TextField(label="Correttori di stazza (es. 6kg prua)", width=370)
-        albero_field = ft.TextField(label="Modello / Profilo Albero (es. Sparcraft)", width=370)
-        tensiometro_field = ft.TextField(label="Scala Tensiometro", value="Loos PT-1", width=370)
 
         errore_text = ft.Text("", color=ft.Colors.RED_600, size=13)
 
@@ -81,14 +82,24 @@ def build_nuova_barca_view(page: ft.Page, stato: dict, on_back):
             except ValueError:
                 return None
 
+        def parse_int(val):
+            if not val or not val.strip():
+                return None
+            try:
+                return int(float(val.strip().replace(",", ".")))
+            except ValueError:
+                return None
+
         def salva_nuova_barca(e):
+            is_custom = dropdown_classe.value == "custom"
+
             if not nome_field.value or not nome_field.value.strip():
                 errore_text.value = "Inserisci il nome della barca."
                 page.update()
                 return
 
-            if dropdown_classe.value == "custom" and (not classe_custom_field.value or not classe_custom_field.value.strip()):
-                errore_text.value = "Inserisci il nome della classe o modello della barca."
+            if is_custom and (not modello_field.value or not modello_field.value.strip()):
+                errore_text.value = "Inserisci il modello della barca."
                 page.update()
                 return
 
@@ -102,18 +113,22 @@ def build_nuova_barca_view(page: ft.Page, stato: dict, on_back):
 
             dati_reg = nuova["dati_regolazioni"]
             if "dati_barca" in dati_reg:
-                if dropdown_classe.value == "custom":
-                    dati_reg["dati_barca"]["classe_personalizzata"] = classe_custom_field.value.strip()
-                    dati_reg["dati_barca"]["lunghezza_ft_m"] = parse_float(lft_field.value)
-                    dati_reg["dati_barca"]["larghezza_max_m"] = parse_float(larghezza_field.value)
-                    dati_reg["dati_barca"]["pescaggio_m"] = parse_float(pescaggio_field.value)
+                if is_custom:
+                    dati_reg["dati_barca"]["modello_barca"] = modello_field.value.strip()
+                    dati_reg["dati_barca"]["peso_kg"] = parse_float(peso_field.value)
+                    dati_reg["dati_barca"]["peso_chiglia_kg"] = parse_float(peso_chiglia_field.value)
+                    dati_reg["dati_barca"]["correttori_stazza"] = correttori_field.value.strip()
+                    dati_reg["dati_barca"]["lunghezza_lft_mm"] = parse_int(lft_field.value)
+                    dati_reg["dati_barca"]["larghezza_beam_mm"] = parse_int(beam_field.value)
+                    dati_reg["dati_barca"]["pescaggio_mm"] = parse_int(pescaggio_field.value)
+                    dati_reg["dati_barca"]["max_p_mm"] = parse_int(max_p_field.value)
+                else:
+                    dati_reg["dati_barca"]["peso_reale_kg"] = parse_float(peso_field.value)
+                    dati_reg["dati_barca"]["correttori_kg"] = correttori_field.value.strip()
 
                 dati_reg["dati_barca"]["cantiere"] = cantiere_field.value.strip()
-                dati_reg["dati_barca"]["anno_costruzione"] = int(anno_field.value) if anno_field.value.strip().isdigit() else None
-                dati_reg["dati_barca"]["peso_reale_kg"] = parse_float(peso_field.value)
-                dati_reg["dati_barca"]["correttori_kg"] = correttori_field.value.strip()
-                dati_reg["dati_barca"]["modello_albero"] = albero_field.value.strip()
-                dati_reg["dati_barca"]["scala_tensiometro"] = tensiometro_field.value.strip() or "Loos PT-1"
+                dati_reg["dati_barca"]["anno_costruzione"] = parse_int(anno_field.value)
+
                 db.aggiorna_regolazioni(nuova["id"], dati_reg)
 
             stato["barca_selezionata_id"] = nuova["id"]
@@ -122,18 +137,17 @@ def build_nuova_barca_view(page: ft.Page, stato: dict, on_back):
         page.add(
             header,
             ft.Divider(),
-            ft.Text("Dati Identificativi & Classe", weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
+            ft.Text("Dati Identificativi", weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
             dropdown_classe,
-            contenitore_custom,
             nome_field,
+            modello_field,
             vela_field,
             ft.Divider(height=15),
-            ft.Text("Specifiche Scafo & Attrezzatura", weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
-            cantiere_field,
-            ft.Row([anno_field, peso_field], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            ft.Text("Scafo, Pesi & Dimensioni (mm)", weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
+            ft.Row([cantiere_field, anno_field], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            ft.Row([peso_field, peso_chiglia_field], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            sezione_misure_mm,
             correttori_field,
-            albero_field,
-            tensiometro_field,
             errore_text,
             ft.Container(height=10),
             ft.Button(

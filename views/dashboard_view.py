@@ -120,6 +120,13 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
                 )
             )
 
+is_custom = barca["classe_id"] == "custom"
+        nome_classe_mostrato = (
+            dati_barca.get("modello_barca") or "Barca Personalizzata"
+            if is_custom
+            else barca["classe_id"].upper()
+        )
+
         card_info = ft.Container(
             content=ft.Row(
                 [
@@ -130,7 +137,7 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
                                 [
                                     ft.Text(barca["nome_barca"], size=18, weight=ft.FontWeight.BOLD),
                                     ft.Text(
-                                        f"{barca['classe_id'].upper()} | {barca.get('numero_velico', '')}",
+                                        f"{nome_classe_mostrato} | {barca.get('numero_velico', '')}",
                                         size=12,
                                         color=ft.Colors.GREY_700,
                                     ),
@@ -185,28 +192,53 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
         # ======================================================================
         if stato["tab_attiva"] == "barca":
             peso_min = specs.get("dislocamento_minimo_kg", specs.get("dislocamento_kg", 770))
-            page.add(
-                ft.Text("Specifiche Fisse di Classe", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
-                ft.Container(
-                    content=ft.Column(
-                        [
-                            ft.Text(
-                                f"LFT: {specs.get('lunghezza_ft_m', '-')}m  •  Larghezza: {specs.get('larghezza_max_m', '-')}m  •  Pescaggio: {specs.get('pescaggio_m', '-')}m",
-                                size=12,
-                            ),
-                            ft.Text(
-                                f"Peso min: {peso_min}kg  •  Randa: {specs.get('superficie_randa_mq', '-')}mq  •  Genoa: {specs.get('superficie_genoa_mq', '-')}mq  •  Fiocco: {specs.get('superficie_fiocco_mq', '-')}mq  •  Spi: {specs.get('superficie_spi_mq', '-')}mq",
-                                size=12,
-                            ),
-                        ],
-                        spacing=4,
+            if stato["tab_attiva"] == "barca":
+            if is_custom:
+                f_modello = ft.TextField(label="Modello Barca", value=str(dati_barca.get("modello_barca", "")), width=370, dense=True, read_only=not puo_modificare)
+                f_cantiere = ft.TextField(label="Cantiere", value=str(dati_barca.get("cantiere", "")), width=220, dense=True, read_only=not puo_modificare)
+                f_anno = ft.TextField(label="Anno", value=str(dati_barca.get("anno_costruzione") or ""), width=140, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
+                f_peso = ft.TextField(label="Peso (kg)", value=str(dati_barca.get("peso_kg") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
+                f_peso_chiglia = ft.TextField(label="Peso in chiglia (kg)", value=str(dati_barca.get("peso_chiglia_kg") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
+                f_lft = ft.TextField(label="Lunghezza LFT (mm)", value=str(dati_barca.get("lunghezza_lft_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
+                f_beam = ft.TextField(label="Larghezza Beam (mm)", value=str(dati_barca.get("larghezza_beam_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
+                f_pescaggio = ft.TextField(label="Pescaggio (mm)", value=str(dati_barca.get("pescaggio_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
+                f_max_p = ft.TextField(label="Max P (mm)", value=str(dati_barca.get("max_p_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
+                f_correttori = ft.TextField(label="Correttori di stazza", value=str(dati_barca.get("correttori_stazza", "")), width=370, dense=True, read_only=not puo_modificare)
+
+                page.add(
+                    ft.Text("Dati & Dimensioni Barca (mm)", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
+                    f_modello,
+                    ft.Row([f_cantiere, f_anno], spacing=10),
+                    ft.Row([f_peso, f_peso_chiglia], spacing=10),
+                    ft.Row([f_lft, f_beam], spacing=10),
+                    ft.Row([f_pescaggio, f_max_p], spacing=10),
+                    f_correttori,
+                )
+            else:
+                # Qui resta il tuo blocco attuale per il Meteor (specifiche fisse + campi Meteor)
+                peso_min = specs.get("dislocamento_minimo_kg", specs.get("dislocamento_kg", 770))
+                page.add(
+                    ft.Text("Specifiche Fisse di Classe", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
+                    ft.Container(
+                        content=ft.Column(
+                            [
+                                ft.Text(
+                                    f"LFT: {specs.get('lunghezza_ft_m', '-')}m  •  Larghezza: {specs.get('larghezza_max_m', '-')}m  •  Pescaggio: {specs.get('pescaggio_m', '-')}m",
+                                    size=12,
+                                ),
+                                ft.Text(
+                                    f"Peso min: {peso_min}kg  •  Randa: {specs.get('superficie_randa_mq', '-')}mq  •  Genoa: {specs.get('superficie_genoa_mq', '-')}mq  •  Fiocco: {specs.get('superficie_fiocco_mq', '-')}mq  •  Spi: {specs.get('superficie_spi_mq', '-')}mq",
+                                    size=12,
+                                ),
+                            ],
+                            spacing=4,
+                        ),
+                        padding=10,
+                        bgcolor=ft.Colors.GREY_100,
+                        border_radius=8,
                     ),
-                    padding=10,
-                    bgcolor=ft.Colors.GREY_100,
-                    border_radius=8,
-                ),
-                ft.Text("Dati Specifici Scafo (Modificabili)", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
-            )
+                )
+                # ... (qui lascia i tuoi campi f_cantiere, f_anno, f_peso, f_correttori, f_albero, f_tensiometro, f_strallo, f_rake, f_prebend che hai già modificato)
 
             f_cantiere = ft.TextField(label="Cantiere", value=str(dati_barca.get("cantiere", "")), width=180, dense=True, read_only=not puo_modificare)
             f_anno = ft.TextField(label="Anno", value=str(dati_barca.get("anno_costruzione") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
@@ -222,21 +254,38 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
             msg_barca = ft.Text("", color=ft.Colors.GREEN_700, weight=ft.FontWeight.BOLD) #quando salvi barca ti viene fuori "barca salvata"
 
             def salva_dati_scafo(e):
-                dati["dati_barca"] = {
-                    "cantiere": f_cantiere.value.strip(),
-                    "anno_costruzione": int(f_anno.value) if f_anno.value.strip().isdigit() else None,
-                    "peso_reale_kg": float(f_peso.value.replace(",", ".")) if f_peso.value else peso_min,
-                    "correttori_kg": f_correttori.value.strip(),
-                    "modello_albero": f_albero.value.strip(),
-                    "scala_tensiometro": f_tensiometro.value.strip(),
-                }
-                dati["assetto_banchina"] = {
-                    "lunghezza_strallo_mm": int(f_strallo.value) if f_strallo.value.strip().isdigit() else None,
-                    "rake_testa_albero_mm": int(f_rake.value) if f_rake.value.strip().isdigit() else None,
-                    "pre_bend_mm": int(f_prebend.value) if f_prebend.value.strip().isdigit() else None,
-                }
+                def salva_dati_scafo(e):
+                if is_custom:
+                    dati["dati_barca"] = {
+                        "modello_barca": f_modello.value.strip(),
+                        "cantiere": f_cantiere.value.strip(),
+                        "anno_costruzione": int(f_anno.value) if f_anno.value.strip().isdigit() else None,
+                        "peso_kg": float(f_peso.value.replace(",", ".")) if f_peso.value.strip() else None,
+                        "peso_chiglia_kg": float(f_peso_chiglia.value.replace(",", ".")) if f_peso_chiglia.value.strip() else None,
+                        "lunghezza_lft_mm": int(float(f_lft.value.replace(",", "."))) if f_lft.value.strip() else None,
+                        "larghezza_beam_mm": int(float(f_beam.value.replace(",", "."))) if f_beam.value.strip() else None,
+                        "pescaggio_mm": int(float(f_pescaggio.value.replace(",", "."))) if f_pescaggio.value.strip() else None,
+                        "max_p_mm": int(float(f_max_p.value.replace(",", "."))) if f_max_p.value.strip() else None,
+                        "correttori_stazza": f_correttori.value.strip(),
+                    }
+                else:
+                    # Qui lasci esattamente le righe che avevi già per salvare dati["dati_barca"] e dati["assetto_banchina"] del Meteor
+                    dati["dati_barca"] = {
+                        "cantiere": f_cantiere.value.strip(),
+                        "anno_costruzione": int(f_anno.value) if f_anno.value.strip().isdigit() else None,
+                        "peso_reale_kg": float(f_peso.value.replace(",", ".")) if f_peso.value.strip() else None,
+                        "correttori_kg": f_correttori.value.strip(),
+                        "modello_albero": f_albero.value.strip(),
+                        "scala_tensiometro": f_tensiometro.value.strip(),
+                    }
+                    dati["assetto_banchina"] = {
+                        "lunghezza_strallo_mm": int(f_strallo.value) if f_strallo.value.strip().isdigit() else None,
+                        "rake_testa_albero_mm": int(f_rake.value) if f_rake.value.strip().isdigit() else None,
+                        "pre_bend_mm": int(f_prebend.value) if f_prebend.value.strip().isdigit() else None,
+                    }
+
                 db.aggiorna_regolazioni(barca["id"], dati)
-                msg_barca.value = "✓ Dati scafo e banchina salvati!"
+                msg_barca.value = "✓ Dati barca salvati!"
                 page.update()
 
             page.add(
