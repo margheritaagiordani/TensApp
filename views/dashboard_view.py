@@ -426,7 +426,7 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
                     ],
                     width=370,
                 )
-                v_nome = ft.TextField(label="Nome Vela (es. Genoa 1 Eurosail) *", width=370, dense=True)
+                v_nome = ft.TextField(label="Nome Vela (es. fiocco 1 Eurosail) *", width=370, dense=True)
                 v_velaio = ft.TextField(label="Velaio", width=230, dense=True)
                 v_anno = ft.TextField(label="Anno", width=130, dense=True, keyboard_type=ft.KeyboardType.NUMBER)
                 v_note = ft.TextField(label="Note (es. vento leggero, regata)", width=370, dense=True)
