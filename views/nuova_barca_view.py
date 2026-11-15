@@ -34,6 +34,10 @@ def build_nuova_barca_view(page: ft.Page, stato: dict, on_back):
             width=370,
         )
 
+        def is_template_default():
+            t = next((x for x in templates if x["id"] == dropdown_classe.value), None)
+            return not bool(t and t.get("dati_template", {}).get("specifiche_fisse"))
+
         # Dati identificativi
         nome_field = ft.TextField(label="Nome Barca *", width=370)
         modello_field = ft.TextField(label="Modello Barca (es. J/24, First 31.7) *", width=370)
@@ -46,7 +50,7 @@ def build_nuova_barca_view(page: ft.Page, stato: dict, on_back):
         peso_chiglia_field = ft.TextField(label="Peso in chiglia (kg)", width=180, keyboard_type=ft.KeyboardType.NUMBER)
         correttori_field = ft.TextField(label="Correttori di stazza", width=370)
 
-        # Misure in millimetri (per barca di default 'custom')
+        # Misure in millimetri (per barca di default)
         lft_field = ft.TextField(label="Lunghezza LFT (mm)", width=180, keyboard_type=ft.KeyboardType.NUMBER)
         beam_field = ft.TextField(label="Larghezza Beam (mm)", width=180, keyboard_type=ft.KeyboardType.NUMBER)
         pescaggio_field = ft.TextField(label="Pescaggio (mm)", width=180, keyboard_type=ft.KeyboardType.NUMBER)
@@ -57,15 +61,14 @@ def build_nuova_barca_view(page: ft.Page, stato: dict, on_back):
                 ft.Row([lft_field, beam_field], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
                 ft.Row([pescaggio_field, max_p_field], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
             ],
-            visible=(dropdown_classe.value == "custom"),
+            visible=is_template_default(),
         )
-        modello_field.visible = (dropdown_classe.value == "custom")
-        peso_chiglia_field.visible = (dropdown_classe.value == "custom")
+        modello_field.visible = is_template_default()
+        peso_chiglia_field.visible = is_template_default()
+        peso_field.value = "" if is_template_default() else "770"
 
         def on_cambia_classe(e):
-            def is_template_default():
-                t = next((x for x in templates if x["id"] == dropdown_classe.value), None)
-                return not bool(t and t.get("dati_template", {}).get("specifiche_fisse"))
+            is_custom = is_template_default()
             modello_field.visible = is_custom
             peso_chiglia_field.visible = is_custom
             sezione_misure_mm.visible = is_custom
@@ -93,7 +96,7 @@ def build_nuova_barca_view(page: ft.Page, stato: dict, on_back):
                 return None
 
         def salva_nuova_barca(e):
-            is_custom = dropdown_classe.value == "custom"
+            is_custom = is_template_default()
 
             if not nome_field.value or not nome_field.value.strip():
                 errore_text.value = "Inserisci il nome della barca."

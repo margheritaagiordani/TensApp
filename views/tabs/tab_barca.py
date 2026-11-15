@@ -48,7 +48,6 @@ def build_tab_barca(page: ft.Page, barca: dict, puo_modificare: bool, on_refresh
                 return None
 
         def salva_default(e):
-            # Aggiorniamo anche nome_barca e numero_velico nella tabella barche
             db.supabase.table("barche").update({
                 "nome_barca": f_nome.value.strip() or barca["nome_barca"],
                 "numero_velico": f_vela.value.strip(),
@@ -72,16 +71,16 @@ def build_tab_barca(page: ft.Page, barca: dict, puo_modificare: bool, on_refresh
                 on_refresh()
             else:
                 page.update()
-    page.update()
 
         page.add(
             ft.Text("Scheda Tecnica Barca (Misure in mm)", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
             ft.Row([f_nome, f_vela], spacing=10),
-            ft.Row([f_modello], spacing=10),
+            f_modello,
             ft.Row([f_cantiere, f_anno], spacing=10),
-            ft.Row([f_peso, f_peso_chiglia, f_correttori], spacing=10),
+            ft.Row([f_peso, f_peso_chiglia], spacing=10),
             ft.Row([f_lft, f_beam], spacing=10),
-            ft.Row([f_pescaggio, f_max_p], spacing=10)   
+            ft.Row([f_pescaggio, f_max_p], spacing=10),
+            f_correttori,
         )
         if puo_modificare:
             page.add(
@@ -158,3 +157,5 @@ def build_tab_barca(page: ft.Page, barca: dict, puo_modificare: bool, on_refresh
                 ft.Button("Salva Dati Barca", icon=ft.Icons.SAVE, bgcolor=ft.Colors.BLUE_700, color=ft.Colors.WHITE, width=370, on_click=salva_monotipo),
                 msg_barca,
             )
+
+    page.update()
