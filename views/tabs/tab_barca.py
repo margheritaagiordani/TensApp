@@ -72,6 +72,7 @@ def build_tab_barca(page: ft.Page, barca: dict, puo_modificare: bool, on_refresh
                 on_refresh()
             else:
                 page.update()
+    page.update()
 
         page.add(
             ft.Text("Scheda Tecnica Barca (Misure in mm)", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
