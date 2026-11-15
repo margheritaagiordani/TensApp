@@ -76,12 +76,11 @@ def build_tab_barca(page: ft.Page, barca: dict, puo_modificare: bool, on_refresh
         page.add(
             ft.Text("Scheda Tecnica Barca (Misure in mm)", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
             ft.Row([f_nome, f_vela], spacing=10),
-            f_modello,
+            ft.Row([f_modello], spacing=10),
             ft.Row([f_cantiere, f_anno], spacing=10),
-            ft.Row([f_peso, f_peso_chiglia], spacing=10),
+            ft.Row([f_peso, f_peso_chiglia, f_correttori], spacing=10),
             ft.Row([f_lft, f_beam], spacing=10),
-            ft.Row([f_pescaggio, f_max_p], spacing=10),
-            f_correttori,
+            ft.Row([f_pescaggio, f_max_p], spacing=10)   
         )
         if puo_modificare:
             page.add(

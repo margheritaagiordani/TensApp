@@ -1,6 +1,9 @@
-from datetime import date
 import flet as ft
 import db
+from views.tabs.tab_barca import build_tab_barca
+from views.tabs.tab_baseline import build_tab_baseline
+from views.tabs.tab_vele import build_tab_vele
+from views.tabs.tab_log import build_tab_log
 
 
 def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_barca, on_open_condividi):
@@ -8,14 +11,15 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
     try:
         user_id = stato["user"].id
 
-        # 1. Scarichiamo barche e permessi
         barche, permessi = db.get_barche_e_permessi(user_id)
         stato["barche"] = barche
         stato["permessi_condivisi"] = permessi
 
-        # Tab attiva di default
         if "tab_attiva" not in stato:
             stato["tab_attiva"] = "barca"
+
+        def ricarica():
+            build_dashboard_view(page, stato, on_logout, on_open_nuova_barca, on_open_condividi)
 
         header = ft.Row(
             [
@@ -72,7 +76,7 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
 
         def cambia_barca(e):
             stato["barca_selezionata_id"] = dropdown_barche.value
-            build_dashboard_view(page, stato, on_logout, on_open_nuova_barca, on_open_condividi)
+            ricarica()
 
         dropdown_barche = ft.Dropdown(
             label="Seleziona Barca",
@@ -83,7 +87,7 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
         )
         page.add(dropdown_barche)
 
-        # Recuperiamo la barca attiva e i permessi
+        # Dati barca attiva e permessi
         barca = next(b for b in stato["barche"] if b["id"] == stato["barca_selezionata_id"])
         is_owner = barca["owner_id"] == user_id
         permesso = "owner" if is_owner else stato["permessi_condivisi"].get(barca["id"], "read")
@@ -96,12 +100,14 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
         else:
             badge_testo, badge_colore = "Condivisa (Sola lettura)", ft.Colors.GREY_700
 
-        dati = barca["dati_regolazioni"]
-        specs = dati.get("specifiche_fisse", {})
-        dati_barca = dati.get("dati_barca", {})
-        assetto = dati.get("assetto_banchina", dati.get("assetto_base_banchina", {}))
+        dati_barca = barca["dati_regolazioni"].get("dati_barca", {})
+        is_custom = not bool(barca.get("dati_regolazioni", {}).get("specifiche_fisse"))
+        nome_classe_mostrato = (
+            dati_barca.get("modello_barca") or "Barca Personalizzata"
+            if is_custom
+            else barca["classe_id"].upper()
+        )
 
-        # Intestazione Barca + Pulsante Condividi (solo per owner)
         azioni_barca = [
             ft.Container(
                 content=ft.Text(badge_testo, size=10, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD),
@@ -119,13 +125,6 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
                     on_click=lambda _: on_open_condividi(barca),
                 )
             )
-
-is_custom = barca["classe_id"] == "custom"
-        nome_classe_mostrato = (
-            dati_barca.get("modello_barca") or "Barca Personalizzata"
-            if is_custom
-            else barca["classe_id"].upper()
-        )
 
         card_info = ft.Container(
             content=ft.Row(
@@ -156,10 +155,9 @@ is_custom = barca["classe_id"] == "custom"
         )
         page.add(card_info)
 
-        # Barra di navigazione tra le 4 sezioni
         def seleziona_tab(nome_tab: str):
             stato["tab_attiva"] = nome_tab
-            build_dashboard_view(page, stato, on_logout, on_open_nuova_barca, on_open_condividi)
+            ricarica()
 
         def crea_bottone_tab(id_tab: str, etichetta: str):
             attivo = stato["tab_attiva"] == id_tab
@@ -187,453 +185,15 @@ is_custom = barca["classe_id"] == "custom"
         )
         page.add(barra_tab, ft.Divider(height=10))
 
-        # ======================================================================
-        # TAB 1: DATI BARCA, SPECIFICHE CLASSE E ASSETTO BANCHINA
-        # ======================================================================
+        # Delega del disegno alle singole tab modulari
         if stato["tab_attiva"] == "barca":
-            peso_min = specs.get("dislocamento_minimo_kg", specs.get("dislocamento_kg", 770))
-            if stato["tab_attiva"] == "barca":
-            if is_custom:
-                f_modello = ft.TextField(label="Modello Barca", value=str(dati_barca.get("modello_barca", "")), width=370, dense=True, read_only=not puo_modificare)
-                f_cantiere = ft.TextField(label="Cantiere", value=str(dati_barca.get("cantiere", "")), width=220, dense=True, read_only=not puo_modificare)
-                f_anno = ft.TextField(label="Anno", value=str(dati_barca.get("anno_costruzione") or ""), width=140, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
-                f_peso = ft.TextField(label="Peso (kg)", value=str(dati_barca.get("peso_kg") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
-                f_peso_chiglia = ft.TextField(label="Peso in chiglia (kg)", value=str(dati_barca.get("peso_chiglia_kg") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
-                f_lft = ft.TextField(label="Lunghezza LFT (mm)", value=str(dati_barca.get("lunghezza_lft_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
-                f_beam = ft.TextField(label="Larghezza Beam (mm)", value=str(dati_barca.get("larghezza_beam_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
-                f_pescaggio = ft.TextField(label="Pescaggio (mm)", value=str(dati_barca.get("pescaggio_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
-                f_max_p = ft.TextField(label="Max P (mm)", value=str(dati_barca.get("max_p_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
-                f_correttori = ft.TextField(label="Correttori di stazza", value=str(dati_barca.get("correttori_stazza", "")), width=370, dense=True, read_only=not puo_modificare)
-
-                page.add(
-                    ft.Text("Dati & Dimensioni Barca (mm)", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
-                    f_modello,
-                    ft.Row([f_cantiere, f_anno], spacing=10),
-                    ft.Row([f_peso, f_peso_chiglia], spacing=10),
-                    ft.Row([f_lft, f_beam], spacing=10),
-                    ft.Row([f_pescaggio, f_max_p], spacing=10),
-                    f_correttori,
-                )
-            else:
-                # Qui resta il tuo blocco attuale per il Meteor (specifiche fisse + campi Meteor)
-                peso_min = specs.get("dislocamento_minimo_kg", specs.get("dislocamento_kg", 770))
-                page.add(
-                    ft.Text("Specifiche Fisse di Classe", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
-                    ft.Container(
-                        content=ft.Column(
-                            [
-                                ft.Text(
-                                    f"LFT: {specs.get('lunghezza_ft_m', '-')}m  •  Larghezza: {specs.get('larghezza_max_m', '-')}m  •  Pescaggio: {specs.get('pescaggio_m', '-')}m",
-                                    size=12,
-                                ),
-                                ft.Text(
-                                    f"Peso min: {peso_min}kg  •  Randa: {specs.get('superficie_randa_mq', '-')}mq  •  Genoa: {specs.get('superficie_genoa_mq', '-')}mq  •  Fiocco: {specs.get('superficie_fiocco_mq', '-')}mq  •  Spi: {specs.get('superficie_spi_mq', '-')}mq",
-                                    size=12,
-                                ),
-                            ],
-                            spacing=4,
-                        ),
-                        padding=10,
-                        bgcolor=ft.Colors.GREY_100,
-                        border_radius=8,
-                    ),
-                )
-                # ... (qui lascia i tuoi campi f_cantiere, f_anno, f_peso, f_correttori, f_albero, f_tensiometro, f_strallo, f_rake, f_prebend che hai già modificato)
-
-            f_cantiere = ft.TextField(label="Cantiere", value=str(dati_barca.get("cantiere", "")), width=180, dense=True, read_only=not puo_modificare)
-            f_anno = ft.TextField(label="Anno", value=str(dati_barca.get("anno_costruzione") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
-            f_peso = ft.TextField(label="Peso reale (kg)", value=str(dati_barca.get("peso_reale_kg", peso_min)), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
-            f_correttori = ft.TextField(label="Correttori (kg)", value=str(dati_barca.get("correttori_kg", "")), width=180, dense=True, read_only=not puo_modificare)
-            f_albero = ft.TextField(label="Modello Albero", value=str(dati_barca.get("modello_albero", "")), width=180, dense=True, read_only=not puo_modificare)
-            f_tensiometro = ft.TextField(label="Scala Tensiometro", value=str(dati_barca.get("scala_tensiometro", "Loos PT-1")), width=180, dense=True, read_only=not puo_modificare)
-
-            f_strallo = ft.TextField(label="Lunghezza Strallo (mm)", value=str(assetto.get("lunghezza_strallo_mm", "")), width=118, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
-            f_rake = ft.TextField(label="Rake (mm)", value=str(assetto.get("rake_testa_albero_mm", "")), width=118, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
-            f_prebend = ft.TextField(label="Pre-bend (mm)", value=str(assetto.get("pre_bend_mm", "")), width=118, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
-
-            msg_barca = ft.Text("", color=ft.Colors.GREEN_700, weight=ft.FontWeight.BOLD) #quando salvi barca ti viene fuori "barca salvata"
-
-            def salva_dati_scafo(e):
-                def salva_dati_scafo(e):
-                if is_custom:
-                    dati["dati_barca"] = {
-                        "modello_barca": f_modello.value.strip(),
-                        "cantiere": f_cantiere.value.strip(),
-                        "anno_costruzione": int(f_anno.value) if f_anno.value.strip().isdigit() else None,
-                        "peso_kg": float(f_peso.value.replace(",", ".")) if f_peso.value.strip() else None,
-                        "peso_chiglia_kg": float(f_peso_chiglia.value.replace(",", ".")) if f_peso_chiglia.value.strip() else None,
-                        "lunghezza_lft_mm": int(float(f_lft.value.replace(",", "."))) if f_lft.value.strip() else None,
-                        "larghezza_beam_mm": int(float(f_beam.value.replace(",", "."))) if f_beam.value.strip() else None,
-                        "pescaggio_mm": int(float(f_pescaggio.value.replace(",", "."))) if f_pescaggio.value.strip() else None,
-                        "max_p_mm": int(float(f_max_p.value.replace(",", "."))) if f_max_p.value.strip() else None,
-                        "correttori_stazza": f_correttori.value.strip(),
-                    }
-                else:
-                    # Qui lasci esattamente le righe che avevi già per salvare dati["dati_barca"] e dati["assetto_banchina"] del Meteor
-                    dati["dati_barca"] = {
-                        "cantiere": f_cantiere.value.strip(),
-                        "anno_costruzione": int(f_anno.value) if f_anno.value.strip().isdigit() else None,
-                        "peso_reale_kg": float(f_peso.value.replace(",", ".")) if f_peso.value.strip() else None,
-                        "correttori_kg": f_correttori.value.strip(),
-                        "modello_albero": f_albero.value.strip(),
-                        "scala_tensiometro": f_tensiometro.value.strip(),
-                    }
-                    dati["assetto_banchina"] = {
-                        "lunghezza_strallo_mm": int(f_strallo.value) if f_strallo.value.strip().isdigit() else None,
-                        "rake_testa_albero_mm": int(f_rake.value) if f_rake.value.strip().isdigit() else None,
-                        "pre_bend_mm": int(f_prebend.value) if f_prebend.value.strip().isdigit() else None,
-                    }
-
-                db.aggiorna_regolazioni(barca["id"], dati)
-                msg_barca.value = "✓ Dati barca salvati!"
-                page.update()
-
-            page.add(
-                ft.Row([f_cantiere, f_anno], spacing=12, alignment=ft.MainAxisAlignment.START),
-                ft.Row([f_peso, f_correttori], spacing=12, alignment=ft.MainAxisAlignment.START),
-                ft.Row([f_albero, f_tensiometro], spacing=12, alignment=ft.MainAxisAlignment.START),
-                ft.Text("Assetto Base Banchina", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
-                ft.Row([f_strallo, f_rake, f_prebend], spacing=12, alignment=ft.MainAxisAlignment.START)
-            )
-            if puo_modificare:
-                page.add(
-                    ft.Button("Salva Dati Barca", icon=ft.Icons.SAVE, bgcolor=ft.Colors.BLUE_700, color=ft.Colors.WHITE, width=370, on_click=salva_dati_scafo),
-                    msg_barca,
-                )
-
-        # ======================================================================
-        # TAB 2: TENSIONI BASELINE (MULTIPLI ASSETTI DI RIFERIMENTO)
-        # ======================================================================
+            build_tab_barca(page, barca, puo_modificare, on_refresh=ricarica)
         elif stato["tab_attiva"] == "baseline":
-            baselines = db.get_baseline_barca(barca["id"])
-            scala = dati_barca.get("scala_tensiometro", "Loos PT-1")
-            page.add(ft.Text(f"Baseline di Riferimento ({scala})", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800))
-
-            if not baselines:
-                page.add(ft.Text("Nessuna baseline registrata per questa barca.", size=12, italic=True, color=ft.Colors.GREY_600))
-
-            for bl in baselines:
-                def rimuovi_bl(e, bl_id=bl["id"]):
-                    db.elimina_baseline(bl_id)
-                    build_dashboard_view(page, stato, on_logout, on_open_nuova_barca, on_open_condividi)
-
-                riga_top = [
-                    ft.Column(
-                        [
-                            ft.Text(bl["nome_baseline"], weight=ft.FontWeight.BOLD, size=14, color=ft.Colors.BLUE_900),
-                            ft.Text(
-                                f"Vento: {bl['condizioni_vento']}  •  Equipaggio: {bl.get('peso_equipaggio') or '-'}",
-                                size=12,
-                                color=ft.Colors.GREY_800,
-                            ),
-                        ],
-                        spacing=2,
-                    )
-                ]
-                if puo_modificare:
-                    riga_top.append(ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color=ft.Colors.RED_600, icon_size=20, on_click=rimuovi_bl))
-
-                dettagli_bl = [
-                    ft.Row(riga_top, alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                    ft.Container(
-                        content=ft.Row(
-                            [
-                                ft.Text(f"Alte (V1): {bl.get('tensione_alte') if bl.get('tensione_alte') is not None else '-'}", weight=ft.FontWeight.BOLD, size=12),
-                                ft.Text(f"Basse (D1): {bl.get('tensione_basse') if bl.get('tensione_basse') is not None else '-'}", weight=ft.FontWeight.BOLD, size=12),
-                                ft.Text(f"Strallo: {bl.get('tensione_strallo') if bl.get('tensione_strallo') is not None else '-'}", weight=ft.FontWeight.BOLD, size=12),
-                            ],
-                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        ),
-                        bgcolor=ft.Colors.BLUE_50,
-                        padding=8,
-                        border_radius=6,
-                    ),
-                ]
-                if bl.get("primo_utilizzo"):
-                    dettagli_bl.append(ft.Text(f"Primo utilizzo: {bl['primo_utilizzo']}", size=11, color=ft.Colors.GREY_600))
-                if bl.get("commenti"):
-                    dettagli_bl.append(ft.Text(f"Note: {bl['commenti']}", size=12, italic=True))
-
-                page.add(
-                    ft.Container(
-                        content=ft.Column(dettagli_bl, spacing=6),
-                        padding=10,
-                        border=ft.Border.all(1, ft.Colors.GREY_300),
-                        border_radius=10,
-                    )
-                )
-
-            if puo_modificare:
-                page.add(ft.Divider(height=15), ft.Text("+ Aggiungi Nuova Baseline", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800))
-                b_nome = ft.TextField(label="Nome Baseline (es. Lago Vento Medio) *", width=370, dense=True)
-                b_vento = ft.TextField(label="Condizioni Vento (es. 8-12 kn) *", width=180, dense=True)
-                b_eq = ft.Dropdown(
-                    label="Peso Equipaggio",
-                    value="Medio",
-                    options=[
-                        ft.dropdown.Option(key="Leggero", text="Leggero"),
-                        ft.dropdown.Option(key="Medio", text="Medio"),
-                        ft.dropdown.Option(key="Pesante", text="Pesante"),
-                    ],
-                    width=180,
-                )
-                b_alte = ft.TextField(label="Alte (V1)", width=118, dense=True, keyboard_type=ft.KeyboardType.NUMBER)
-                b_basse = ft.TextField(label="Basse (D1)", width=118, dense=True, keyboard_type=ft.KeyboardType.NUMBER)
-                b_strallo = ft.TextField(label="Strallo", width=118, dense=True, keyboard_type=ft.KeyboardType.NUMBER)
-                b_primo_uso = ft.TextField(label="Primo utilizzo (AAAA-MM-GG)", value=str(date.today()), width=370, dense=True)
-                b_commenti = ft.TextField(label="Commenti", width=370, dense=True, multiline=True)
-                b_err = ft.Text("", color=ft.Colors.RED_600, size=12)
-
-                def parse_num(val):
-                    try:
-                        return float(val.replace(",", ".")) if val and val.strip() else None
-                    except ValueError:
-                        return None
-
-                def salva_nuova_bl(e):
-                    if not b_nome.value.strip() or not b_vento.value.strip():
-                        b_err.value = "Nome baseline e condizioni vento sono obbligatori."
-                        page.update()
-                        return
-                    db.aggiungi_baseline(
-                        barca["id"],
-                        {
-                            "nome_baseline": b_nome.value.strip(),
-                            "condizioni_vento": b_vento.value.strip(),
-                            "peso_equipaggio": b_eq.value,
-                            "tensione_alte": parse_num(b_alte.value),
-                            "tensione_basse": parse_num(b_basse.value),
-                            "tensione_strallo": parse_num(b_strallo.value),
-                            "primo_utilizzo": b_primo_uso.value.strip() or None,
-                            "commenti": b_commenti.value.strip() or None,
-                        },
-                    )
-                    build_dashboard_view(page, stato, on_logout, on_open_nuova_barca, on_open_condividi)
-
-                page.add(
-                    b_nome,
-                    ft.Row([b_vento, b_eq], spacing=12, alignment=ft.MainAxisAlignment.START),
-                    ft.Row([b_alte, b_basse, b_strallo], spacing=12, alignment=ft.MainAxisAlignment.START),
-                    b_primo_uso,
-                    b_commenti,
-                    b_err,
-                    ft.Button("Salva Baseline", icon=ft.Icons.ADD, bgcolor=ft.Colors.BLUE_700, color=ft.Colors.WHITE, width=370, on_click=salva_nuova_bl),
-                )
-
-        # ======================================================================
-        # TAB 3: INVENTARIO VELE (RANDE, FIOCCO/GENOA, PRUA)
-        # ======================================================================
+            build_tab_baseline(page, barca, puo_modificare, on_refresh=ricarica)
         elif stato["tab_attiva"] == "vele":
-            vele = db.get_inventario_vele(barca["id"])
-            categorie = [
-                ("randa", "Rande"),
-                ("fiocco_genoa", "Fiocco / Genoa"),
-                ("prua", "Vele di Prua (Spi / Gennaker)"),
-            ]
-
-            for cat_key, cat_titolo in categorie:
-                page.add(ft.Text(cat_titolo, size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800))
-                vele_cat = [v for v in vele if v["categoria"] == cat_key]
-                if not vele_cat:
-                    page.add(ft.Text("Nessuna vela inserita.", size=12, italic=True, color=ft.Colors.GREY_600))
-                for v in vele_cat:
-                    def cancella_vela(e, v_id=v["id"]):
-                        db.elimina_vela(v_id)
-                        build_dashboard_view(page, stato, on_logout, on_open_nuova_barca, on_open_condividi)
-
-                    info_extra = " • ".join(filter(None, [v.get("velaio"), str(v["anno"]) if v.get("anno") else None, v.get("note")]))
-                    row_v = [
-                        ft.Column(
-                            [
-                                ft.Text(v["nome_vela"], weight=ft.FontWeight.BOLD, size=13),
-                                ft.Text(info_extra or "Nessun dettaglio", size=11, color=ft.Colors.GREY_700),
-                            ],
-                            spacing=1,
-                        )
-                    ]
-                    if puo_modificare:
-                        row_v.append(ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color=ft.Colors.RED_600, icon_size=18, on_click=cancella_vela))
-
-                    page.add(
-                        ft.Container(
-                            content=ft.Row(row_v, alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                            padding=8,
-                            border=ft.Border.all(1, ft.Colors.GREY_300),
-                            border_radius=8,
-                        )
-                    )
-
-            if puo_modificare:
-                page.add(ft.Divider(height=15), ft.Text("+ Aggiungi Vela all'Inventario", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800))
-                v_cat = ft.Dropdown(
-                    label="Categoria *",
-                    value="fiocco_genoa",
-                    options=[
-                        ft.dropdown.Option(key="randa", text="Mainsail"),
-                        ft.dropdown.Option(key="fiocco_genoa", text="Headsail"),
-                        ft.dropdown.Option(key="prua", text="Kite"),
-                    ],
-                    width=370,
-                )
-                v_nome = ft.TextField(label="Nome Vela (es. fiocco 1 Eurosail) *", width=370, dense=True)
-                v_velaio = ft.TextField(label="Velaio", width=230, dense=True)
-                v_anno = ft.TextField(label="Anno", width=130, dense=True, keyboard_type=ft.KeyboardType.NUMBER)
-                v_note = ft.TextField(label="Note (es. vento leggero, regata)", width=370, dense=True)
-                v_err = ft.Text("", color=ft.Colors.RED_600, size=12)
-
-                def salva_nuova_vela(e):
-                    if not v_nome.value.strip():
-                        v_err.value = "Inserisci il nome della vela."
-                        page.update()
-                        return
-                    db.aggiungi_vela(
-                        barca["id"],
-                        {
-                            "categoria": v_cat.value,
-                            "nome_vela": v_nome.value.strip(),
-                            "velaio": v_velaio.value.strip() or None,
-                            "anno": int(v_anno.value) if v_anno.value.strip().isdigit() else None,
-                            "note": v_note.value.strip() or None,
-                        },
-                    )
-                    build_dashboard_view(page, stato, on_logout, on_open_nuova_barca, on_open_condividi)
-
-                page.add(
-                    v_cat,
-                    v_nome,
-                    ft.Row([v_velaio, v_anno], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                    v_note,
-                    v_err,
-                    ft.Button("Aggiungi Vela", icon=ft.Icons.ADD, bgcolor=ft.Colors.BLUE_700, color=ft.Colors.WHITE, width=370, on_click=salva_nuova_vela),
-                )
-
-        # ======================================================================
-        # TAB 4: DIARIO USCITE (LOG_TENSIONI + VELE USATE)
-        # ======================================================================
+            build_tab_vele(page, barca, puo_modificare, on_refresh=ricarica)
         elif stato["tab_attiva"] == "log":
-            vele = db.get_inventario_vele(barca["id"])
-            logs = db.get_log_tensioni(barca["id"])
-
-            if puo_modificare:
-                page.add(ft.Text("+ Registra Nuova Uscita / Allenamento", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800))
-                l_data = ft.TextField(label="Data (AAAA-MM-GG)", value=str(date.today()), width=180, dense=True)
-                l_vento = ft.TextField(label="Vento (es. 10-12 kn)", width=180, dense=True)
-                l_onda = ft.TextField(label="Condizioni Onda (es. Piatta / Formata)", width=370, dense=True)
-
-                l_alte = ft.TextField(label="Alte (V1)", width=118, dense=True, keyboard_type=ft.KeyboardType.NUMBER)
-                l_basse = ft.TextField(label="Basse (D1)", width=118, dense=True, keyboard_type=ft.KeyboardType.NUMBER)
-                l_strallo = ft.TextField(label="Strallo", width=118, dense=True, keyboard_type=ft.KeyboardType.NUMBER)
-
-                # Menu a tendina popolati dall'inventario vele della barca
-                opt_rande = [ft.dropdown.Option(key="", text="Nessuna")] + [
-                    ft.dropdown.Option(key=v["id"], text=v["nome_vela"]) for v in vele if v["categoria"] == "randa"
-                ]
-                opt_fiocchi = [ft.dropdown.Option(key="", text="Nessuna")] + [
-                    ft.dropdown.Option(key=v["id"], text=v["nome_vela"]) for v in vele if v["categoria"] == "fiocco_genoa"
-                ]
-                opt_prua = [ft.dropdown.Option(key="", text="Nessuna")] + [
-                    ft.dropdown.Option(key=v["id"], text=v["nome_vela"]) for v in vele if v["categoria"] == "prua"
-                ]
-
-                l_randa = ft.Dropdown(label="Randa usata", value="", options=opt_rande, width=370)
-                l_fiocco = ft.Dropdown(label="Fiocco / Genoa usato", value="", options=opt_fiocchi, width=370)
-                l_prua = ft.Dropdown(label="Vela di prua usata", value="", options=opt_prua, width=370)
-                l_commento = ft.TextField(label="Commento Armatore", width=370, dense=True, multiline=True)
-
-                def parse_num_log(val):
-                    try:
-                        return float(val.replace(",", ".")) if val and val.strip() else None
-                    except ValueError:
-                        return None
-
-                def salva_uscita(e):
-                    db.aggiungi_log_tensione(
-                        barca["id"],
-                        {
-                            "data": l_data.value.strip() or str(date.today()),
-                            "condizioni_vento": l_vento.value.strip() or None,
-                            "condizioni_onda": l_onda.value.strip() or None,
-                            "tensione_alte": parse_num_log(l_alte.value),
-                            "tensione_basse": parse_num_log(l_basse.value),
-                            "tensione_strallo": parse_num_log(l_strallo.value),
-                            "randa_id": l_randa.value if l_randa.value else None,
-                            "fiocco_genoa_id": l_fiocco.value if l_fiocco.value else None,
-                            "vela_prua_id": l_prua.value if l_prua.value else None,
-                            "commento_armatore": l_commento.value.strip() or None,
-                        },
-                    )
-                    build_dashboard_view(page, stato, on_logout, on_open_nuova_barca, on_open_condividi)
-
-                page.add(
-                    ft.Row([l_data, l_vento], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                    l_onda,
-                    ft.Row([l_alte, l_basse, l_strallo], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                    l_randa,
-                    l_fiocco,
-                    l_prua,
-                    l_commento,
-                    ft.Button("Registra Uscita", icon=ft.Icons.SAVE, bgcolor=ft.Colors.BLUE_700, color=ft.Colors.WHITE, width=370, on_click=salva_uscita),
-                    ft.Divider(height=15),
-                )
-
-            page.add(ft.Text("Storico Uscite & Tensioni", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800))
-            if not logs:
-                page.add(ft.Text("Nessuna uscita registrata nel diario.", size=12, italic=True, color=ft.Colors.GREY_600))
-
-            for lg in logs:
-                def rimuovi_lg(e, lg_id=lg["id"]):
-                    db.elimina_log_tensione(lg_id)
-                    build_dashboard_view(page, stato, on_logout, on_open_nuova_barca, on_open_condividi)
-
-                vele_usate = []
-                if lg.get("randa"):
-                    vele_usate.append(f"Mainsail: {lg['randa']['nome_vela']}")
-                if lg.get("fiocco_genoa"):
-                    vele_usate.append(f"Headsail: {lg['fiocco_genoa']['nome_vela']}")
-                if lg.get("vela_prua"):
-                    vele_usate.append(f"Kite: {lg['vela_prua']['nome_vela']}")
-
-                top_lg = [
-                    ft.Column(
-                        [
-                            ft.Text(f"📅 {lg['data']}  •  Vento: {lg.get('condizioni_vento') or '-'}", weight=ft.FontWeight.BOLD, size=13, color=ft.Colors.BLUE_900),
-                            ft.Text(f"Onda: {lg.get('condizioni_onda') or '-'}", size=12, color=ft.Colors.GREY_700),
-                        ],
-                        spacing=1,
-                    )
-                ]
-                if puo_modificare:
-                    top_lg.append(ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color=ft.Colors.RED_600, icon_size=18, on_click=rimuovi_lg))
-
-                corpo_lg = [
-                    ft.Row(top_lg, alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                    ft.Container(
-                        content=ft.Row(
-                            [
-                                ft.Text(f"Alte: {lg.get('tensione_alte') if lg.get('tensione_alte') is not None else '-'}", weight=ft.FontWeight.BOLD, size=12),
-                                ft.Text(f"Basse: {lg.get('tensione_basse') if lg.get('tensione_basse') is not None else '-'}", weight=ft.FontWeight.BOLD, size=12),
-                                ft.Text(f"Strallo: {lg.get('tensione_strallo') if lg.get('tensione_strallo') is not None else '-'}", weight=ft.FontWeight.BOLD, size=12),
-                            ],
-                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        ),
-                        bgcolor=ft.Colors.GREY_100,
-                        padding=8,
-                        border_radius=6,
-                    ),
-                ]
-                if vele_usate:
-                    corpo_lg.append(ft.Text("⛵ " + " | ".join(vele_usate), size=11, color=ft.Colors.BLUE_800))
-                if lg.get("commento_armatore"):
-                    corpo_lg.append(ft.Text(f"\"{lg['commento_armatore']}\"", size=12, italic=True))
-
-                page.add(
-                    ft.Container(
-                        content=ft.Column(corpo_lg, spacing=6),
-                        padding=10,
-                        border=ft.Border.all(1, ft.Colors.GREY_300),
-                        border_radius=10,
-                    )
-                )
+            build_tab_log(page, barca, puo_modificare, on_refresh=ricarica)
 
     except Exception as err:
         page.add(ft.Text(f"Errore nel caricamento: {err}", color=ft.Colors.RED_600))

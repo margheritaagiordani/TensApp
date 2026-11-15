@@ -63,7 +63,9 @@ def build_nuova_barca_view(page: ft.Page, stato: dict, on_back):
         peso_chiglia_field.visible = (dropdown_classe.value == "custom")
 
         def on_cambia_classe(e):
-            is_custom = dropdown_classe.value == "custom"
+            def is_template_default():
+                t = next((x for x in templates if x["id"] == dropdown_classe.value), None)
+                return not bool(t and t.get("dati_template", {}).get("specifiche_fisse"))
             modello_field.visible = is_custom
             peso_chiglia_field.visible = is_custom
             sezione_misure_mm.visible = is_custom
