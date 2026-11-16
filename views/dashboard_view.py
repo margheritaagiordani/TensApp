@@ -103,9 +103,9 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
         dati_barca = barca["dati_regolazioni"].get("dati_barca", {})
         is_custom = not bool(barca.get("dati_regolazioni", {}).get("specifiche_fisse"))
         nome_classe_mostrato = (
-            dati_barca.get("modello_barca") #or "Barca Personalizzata"
-            if is_custom
-            else barca["classe_id"].upper()
+            dati_barca.get("modello_barca") #or dati_barca.get("modello_barca")
+            #if is_custom
+            #else barca["classe_id"].upper()
         )
 
         azioni_barca = [
