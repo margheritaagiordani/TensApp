@@ -59,10 +59,10 @@ def build_tab_barca(page: ft.Page, barca: dict, puo_modificare: bool, on_refresh
                 "anno_costruzione": parse_int(f_anno.value),
                 "peso_kg": parse_float(f_peso.value),
                 "peso_chiglia_kg": parse_float(f_peso_chiglia.value),
-                "lunghezza_lft_mm": parse_int(f_lft.value),
-                "larghezza_beam_mm": parse_int(f_beam.value),
-                "pescaggio_mm": parse_int(f_pescaggio.value),
-                "max_p_mm": parse_int(f_max_p.value),
+                "lunghezza_lft_mm": parse_float(f_lft.value),
+                "larghezza_beam_mm": parse_float(f_beam.value),
+                "pescaggio_mm": parse_float(f_pescaggio.value),
+                "max_p_mm": parse_float(f_max_p.value),
                 "correttori_stazza": f_correttori.value.strip(),
             }
             db.aggiorna_regolazioni(barca["id"], dati)
@@ -75,12 +75,12 @@ def build_tab_barca(page: ft.Page, barca: dict, puo_modificare: bool, on_refresh
         page.add(
             ft.Text("Scheda Tecnica Barca (Misure in mm)", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_800),
             ft.Row([f_nome, f_vela], spacing=10),
-            f_modello,
+            ft.Row([f_modello], spacing=10),
             ft.Row([f_cantiere, f_anno], spacing=10),
-            ft.Row([f_peso, f_peso_chiglia], spacing=10),
+            ft.Row([f_peso, f_peso_chiglia, f_correttori], spacing=10),
             ft.Row([f_lft, f_beam], spacing=10),
             ft.Row([f_pescaggio, f_max_p], spacing=10),
-            f_correttori,
+            
         )
         if puo_modificare:
             page.add(
