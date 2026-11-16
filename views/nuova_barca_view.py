@@ -46,15 +46,15 @@ def build_nuova_barca_view(page: ft.Page, stato: dict, on_back):
         # Cantiere, anno e pesi
         cantiere_field = ft.TextField(label="Cantiere", width=220)
         anno_field = ft.TextField(label="Anno costruzione", width=140, keyboard_type=ft.KeyboardType.NUMBER)
-        peso_field = ft.TextField(label="Peso (kg)", width=180, keyboard_type=ft.KeyboardType.NUMBER)
-        peso_chiglia_field = ft.TextField(label="Peso in chiglia (kg)", width=180, keyboard_type=ft.KeyboardType.NUMBER)
+        peso_field = ft.TextField(label="Peso (kg)", width=180, keyboard_type=ft.KeyboardType.TEXT)
+        peso_chiglia_field = ft.TextField(label="Peso in chiglia (kg)", width=180, keyboard_type=ft.KeyboardType.TEXT)
         correttori_field = ft.TextField(label="Correttori di stazza", width=370)
 
         # Misure in millimetri (per barca di default)
-        lft_field = ft.TextField(label="Lunghezza LFT (mm)", width=180, keyboard_type=ft.KeyboardType.NUMBER)
-        beam_field = ft.TextField(label="Larghezza Beam (mm)", width=180, keyboard_type=ft.KeyboardType.NUMBER)
-        pescaggio_field = ft.TextField(label="Pescaggio (mm)", width=180, keyboard_type=ft.KeyboardType.NUMBER)
-        max_p_field = ft.TextField(label="Max P (mm)", width=180, keyboard_type=ft.KeyboardType.NUMBER)
+        lft_field = ft.TextField(label="Lunghezza LFT (mm)", width=180, keyboard_type=ft.KeyboardType.TEXT)
+        beam_field = ft.TextField(label="Larghezza Beam (mm)", width=180, keyboard_type=ft.KeyboardType.TEXT)
+        pescaggio_field = ft.TextField(label="Pescaggio (mm)", width=180, keyboard_type=ft.KeyboardType.TEXT)
+        max_p_field = ft.TextField(label="Max P (mm)", width=180, keyboard_type=ft.KeyboardType.TEXT)
 
         sezione_misure_mm = ft.Column(
             [
