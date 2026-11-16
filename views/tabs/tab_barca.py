@@ -25,13 +25,13 @@ def build_tab_barca(page: ft.Page, barca: dict, puo_modificare: bool, on_refresh
         f_cantiere = ft.TextField(label="Cantiere", value=str(dati_barca.get("cantiere", "")), width=220, dense=True, read_only=not puo_modificare)
         f_anno = ft.TextField(label="Anno costruzione", value=str(dati_barca.get("anno_costruzione") or ""), width=140, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
 
-        f_peso = ft.TextField(label="Peso (kg)", value=str(dati_barca.get("peso_kg") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
-        f_peso_chiglia = ft.TextField(label="Peso in chiglia (kg)", value=str(dati_barca.get("peso_chiglia_kg") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
+        f_peso = ft.TextField(label="Peso (kg)", value=str(dati_barca.get("peso_kg") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.TEXT, read_only=not puo_modificare)
+        f_peso_chiglia = ft.TextField(label="Peso in chiglia (kg)", value=str(dati_barca.get("peso_chiglia_kg") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.TEXT, read_only=not puo_modificare)
 
-        f_lft = ft.TextField(label="Lunghezza LFT (mm)", value=str(dati_barca.get("lunghezza_lft_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
-        f_beam = ft.TextField(label="Larghezza Beam (mm)", value=str(dati_barca.get("larghezza_beam_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
-        f_pescaggio = ft.TextField(label="Pescaggio (mm)", value=str(dati_barca.get("pescaggio_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
-        f_max_p = ft.TextField(label="Max P (mm)", value=str(dati_barca.get("max_p_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.NUMBER, read_only=not puo_modificare)
+        f_lft = ft.TextField(label="Lunghezza LFT (mm)", value=str(dati_barca.get("lunghezza_lft_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.TEXT, read_only=not puo_modificare)
+        f_beam = ft.TextField(label="Larghezza Beam (mm)", value=str(dati_barca.get("larghezza_beam_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.TEXT, read_only=not puo_modificare)
+        f_pescaggio = ft.TextField(label="Pescaggio (mm)", value=str(dati_barca.get("pescaggio_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.TEXT, read_only=not puo_modificare)
+        f_max_p = ft.TextField(label="Max P (mm)", value=str(dati_barca.get("max_p_mm") or ""), width=180, dense=True, keyboard_type=ft.KeyboardType.TEXT, read_only=not puo_modificare)
 
         f_correttori = ft.TextField(label="Correttori di stazza", value=str(dati_barca.get("correttori_stazza", "")), width=370, dense=True, read_only=not puo_modificare)
 
