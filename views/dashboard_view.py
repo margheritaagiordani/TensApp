@@ -100,12 +100,18 @@ def build_dashboard_view(page: ft.Page, stato: dict, on_logout, on_open_nuova_ba
         else:
             badge_testo, badge_colore = "Condivisa (Sola lettura)", ft.Colors.GREY_700
 
-        dati_barca = barca["dati_regolazioni"].get("dati_barca", {})
+        dati_barca = barca.get("dati_regolazioni", {}).get("dati_barca", {})
         is_custom = not bool(barca.get("dati_regolazioni", {}).get("specifiche_fisse"))
+        modello_utente = (
+            dati_barca.get("modello_barca")
+            or dati_barca.get("classe_personalizzata")
+            or ""
+        ).strip()
+
         nome_classe_mostrato = (
-            dati_barca.get("modello_barca") #or dati_barca.get("modello_barca")
-            #if is_custom
-            #else barca["classe_id"].upper()
+            modello_utente
+            if is_custom and modello_utente
+            else ("Barca Personalizzata" if is_custom else barca["classe_id"].upper())
         )
 
         azioni_barca = [
